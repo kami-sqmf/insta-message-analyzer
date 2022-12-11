@@ -24,7 +24,38 @@ interface jsonBaseGroup extends jsonBase {
     };
 }
 
-interface messageBase {
+interface MessageBase {
+    "sender_name": string;
+    "timestamp_ms": number;
+    "content": string;
+    "call_duration"?: number;
+    "photos"?: {
+        "uri": string;
+        "creation_timestamp"?: number;
+    }[];
+    "reactions"?: {
+        "reaction": string;
+        "actor": string;
+    }[];
+    "audio_files"?: {
+        "uri": string;
+        "creation_timestamp": number;
+    }[];
+    "share"?: {
+        "link"?: string;
+        "share_text"?: string;
+        "original_content_owner"?: string;
+        "profile_share_username"?: string;
+        "profile_share_name"?: string;
+    }[];
+    "videos"?: {
+        "uri": string;
+        "thumbnail"?: string;
+        "creation_timestamp"?: number;
+    }[];
+}
+
+interface oldMessageBase {
     "sender_name": string;
     "timestamp_ms": number;
     'type': 'Generic' | 'Share' | 'Call' | 'Subscribe';
@@ -40,12 +71,12 @@ interface messageBase {
         "link"?: string;
         "share_text"?: string;
         "original_content_owner"?: string;
-      };
+    };
     'photos'?: any;
     'reactions'?: any;
     'call_duration'?: any;
     'videos'?: any;
     'audio_files'?: any;
     'users'?: any;
-    
+
 }

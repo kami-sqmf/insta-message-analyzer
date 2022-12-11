@@ -1,10 +1,10 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import { Dispatch, SetStateAction, useRef, useState } from 'react';
 import logo from './logo.svg';
 const utf8 = require('utf8');
 
-const usersMessage = new Map<string, messageBase[][]>()
-const groupMessage = new Map<string, messageBase[][]>()
-const strangerMessage = new Map<string, messageBase[][]>()
+const usersMessage = new Map<string, MessageBase[][]>()
+const groupMessage = new Map<string, MessageBase[][]>()
+const strangerMessage = new Map<string, MessageBase[][]>()
 const userInfo = {
   name: "無法取得"
 }
@@ -20,9 +20,9 @@ function App() {
         </div>
       </div>
       <div className='bg-light/30 container mx-auto'>
-        {showing == "Main" && <Main setShowing={setShowing} />}
-        {showing == "Loading" && <Loading />}
-        {showing == "DataSelection" && <DataSelection />}
+        {showing === "Main" && <Main setShowing={setShowing} />}
+        {showing === "Loading" && <Loading />}
+        {showing === "DataSelection" && <DataSelection />}
       </div>
     </div>
   );
@@ -74,10 +74,10 @@ const Main = ({ setShowing }: { setShowing: Dispatch<SetStateAction<string>> }) 
         const data: jsonStuff = await readFileAsync(profile) as any
         const title = utf8.decode(data.title)
         const userMessage = usersMessage.get(title)
-        if (data.thread_type == "Regular") usersMessage.set(title, userMessage ? [...userMessage, data.messages as any] : [data.messages]);
-        else if (data.thread_type == "RegularGroup") groupMessage.set(title, groupMessage.get(title) ? [...groupMessage.get(title)!, data.messages as any] : [data.messages]);
+        if (data.thread_type === "Regular") usersMessage.set(title, userMessage ? [...userMessage, data.messages as any] : [data.messages]);
+        else if (data.thread_type === "RegularGroup") groupMessage.set(title, groupMessage.get(title) ? [...groupMessage.get(title)!, data.messages as any] : [data.messages]);
         else strangerMessage.set(title, groupMessage.get(title) ? [...groupMessage.get(title)!, data.messages as any] : [data.messages]);
-        if (data.thread_type == "Regular" && userInfo.name == "無法取得") userInfo.name = utf8.decode(data.participants[1].name);
+        if (data.thread_type === "Regular" && userInfo.name === "無法取得") userInfo.name = utf8.decode(data.participants[1].name);
       }
       setShowing("DataSelection")
     }
@@ -103,7 +103,7 @@ const Main = ({ setShowing }: { setShowing: Dispatch<SetStateAction<string>> }) 
 const DataSelection = () => {
   const [analysis, setAnalysis] = useState(null as any)
   const [error, setError] = useState("")
-  const renderAnalysis = (messageArrays: messageBase[][], userName: string, avatars: string) => {
+  const renderAnalysis = (messageArrays: MessageBase[][], userName: string, avatars: string) => {
     try {
       const analyzed = {
         target: userName,
@@ -133,18 +133,18 @@ const DataSelection = () => {
         }
       }
       setError("")
-      const messages: { type: "Message" | "Media" | "Call" | "Other"; content: string | null; timestamp: number; callDuration: number | null; recevied: Boolean; sentReactions: string | null; recievedReactions: string | null; }[] = new Array();
+      const messages: { type: "Message" | "Media" | "Call" | "Other"; content: string | null; timestamp: number; callDuration: number | null; recevied: Boolean; sentReactions: string | null; recievedReactions: string | null; }[] = [];
       for (const messageArray of messageArrays) {
-        for (const message of messageArray) {
+        for (const message of messageArray as MessageBase[]) {
           let type: "Message" | "Media" | "Call" | "Other" = "Other";
           let sentReactions: string | null = null;
           let recievedReactions: string | null = null;
-          if (message.bumped_message_metadata.bumped_message) type = "Message";
-          else if (message.photos || message.videos || message.audio_files || message.share) type = "Media";
-          else if (message.call_duration) type = "Call"
+          if (message.photos || message.videos || message.audio_files || message.share) type = "Media";
+          else if (message.call_duration) type = "Call";
+          else type = "Message"
           if (message.reactions) {
             for (const reaction of message.reactions) {
-              if (utf8.decode(reaction.actor) == userInfo.name) sentReactions = reaction.reaction
+              if (utf8.decode(reaction.actor) === userInfo.name) sentReactions = reaction.reaction
               else recievedReactions = reaction.reaction
             }
           }
@@ -153,17 +153,17 @@ const DataSelection = () => {
             content: message.content ? utf8.decode(message.content) : null,
             timestamp: message.timestamp_ms,
             callDuration: type.startsWith("Call") ? message.call_duration! : null,
-            recevied: utf8.decode(message.sender_name) == userInfo.name ? false : true,
+            recevied: utf8.decode(message.sender_name) === userInfo.name ? false : true,
             sentReactions: sentReactions,
             recievedReactions: recievedReactions
           })
         }
       }
       for (const message of messages) {
-        if (message.type == "Other") continue;
-        else if (message.type == "Message" || message.type == "Media") {
+        if (message.type === "Other") continue;
+        else if (message.type === "Message" || message.type === "Media") {
           analyzed.message.length++;
-          analyzed.startDay = analyzed.startDay == 0 || analyzed.startDay > message.timestamp ? message.timestamp : analyzed.startDay;
+          analyzed.startDay = analyzed.startDay === 0 || analyzed.startDay > message.timestamp ? message.timestamp : analyzed.startDay;
           analyzed.endDay = analyzed.endDay < message.timestamp ? message.timestamp : analyzed.endDay;
           if (message.content) {
             analyzed.message.totalWords += message.content.length;
@@ -286,7 +286,7 @@ const DataSelection = () => {
                 <p className='font-black text-xl text-primary/60'>{analysis.reactions.sent[reaction]} 次</p>
               </div>
             ))}
-            {Object.keys(analysis.reactions.sent).length == 0 && <p className='font-black text-xl text-primary/60'>沒有按過啊！！</p>}
+            {Object.keys(analysis.reactions.sent).length === 0 && <p className='font-black text-xl text-primary/60'>沒有按過啊！！</p>}
           </div>
           <div className='border-2 border-secondary bg-gradient-to-r from-light/70 via-light/50 to-light/90 rounded-md p-2 flex flex-row space-x-8 w-max items-center'>
             <p className='font-bold text-primary'>{analysis.target} 最常按的5個表符</p>
@@ -296,7 +296,7 @@ const DataSelection = () => {
                 <p className='font-black text-xl text-primary/60'>{analysis.reactions.recevied[reaction]} 次</p>
               </div>
             ))}
-            {Object.keys(analysis.reactions.recevied).length == 0 && <p className='font-black text-xl text-primary/60'>沒有按過啊！！</p>}
+            {Object.keys(analysis.reactions.recevied).length === 0 && <p className='font-black text-xl text-primary/60'>沒有按過啊！！</p>}
           </div>
         </div>}
       </div>
@@ -319,7 +319,7 @@ function readFileAsync(file: File) {
     let reader = new FileReader();
 
     reader.onload = () => {
-      if (typeof reader.result == "string") resolve(JSON.parse(reader.result));
+      if (typeof reader.result === "string") resolve(JSON.parse(reader.result));
       resolve({})
     };
 
@@ -348,7 +348,7 @@ function shuffle(a: Array<string>) {
   return a;
 }
 
-function getRecentMessage(message: messageBase) {
+function getRecentMessage(message: MessageBase) {
   if (message.content) return utf8.decode(message.content);
   else if (message.photos) return "傳送了一張照片";
   else if (message.audio_files) return "傳送了一條語音";
